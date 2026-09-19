@@ -1,0 +1,21 @@
+# OS / editor
+.DS_Store
+.cursor/
+
+# Secrets & local env
+.env
+.env.*
+!.env.example
+
+# Local scratch / issue tracker working files can be committed selectively;
+# keep ephemeral caches out:
+tmp/
+*.pyc
+__pycache__/
+.venv/
+venv/
+node_modules/
+
+# Office scratch / unrelated exports
+*.docx
+~$*
