@@ -35,7 +35,7 @@
       <tr><td class="k">Category</td><td class="v">{{ issue.category or "—" }}</td></tr>
       <tr><td class="k">Urgency</td><td class="v">{{ issue.urgency or "—" }}</td></tr>
       <tr><td class="k">Owner</td><td class="v">{{ issue.owner or "—" }}</td></tr>
-      <tr><td class="k">Action</td><td class="v">{{ issue.next_action or "—" }}</td></tr>
+      <tr><td class="k">Action</td><td class="v">{{ action_label(issue.next_action) }}</td></tr>
     </table>
     {% if issue.reasoning %}
     <div class="reasoning">{{ issue.reasoning }}</div>

@@ -1,59 +1,81 @@
 {% extends "base.html" %}
 {% block title %}Inbox — Issue Triage{% endblock %}
 {% block content %}
+<div class="page-intro">
+  <h1>Inbox</h1>
+  <p class="tagline">Water, settle everything.</p>
+</div>
+
 {% if error %}
 <div class="notice notice-error">
   <strong>Import failed:</strong> {{ error }}
 </div>
 {% endif %}
 
-<div class="intake-row">
-  <div>
-    <p class="section-label">Import from GitHub</p>
-    <form method="post" action="/intake/github">
-      <div class="field">
-        <label for="github_ref">Issue URL or owner/repo#number</label>
-        <input type="text" id="github_ref" name="github_ref" placeholder="elastic/kibana#12345" required />
-      </div>
-      <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled{% endif %}>Import</button>
-    </form>
+<details class="intake-panel" {% if not demo_mode %}open{% endif %}>
+  <summary>New issue</summary>
+  <div class="intake-body">
+    <div>
+      <p class="section-label">Import from GitHub</p>
+      <form method="post" action="/intake/github">
+        <div class="field">
+          <label for="github_ref">Issue URL or owner/repo#number</label>
+          <input type="text" id="github_ref" name="github_ref" placeholder="elastic/kibana#12345" required />
+        </div>
+        <div class="intake-actions">
+          <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled{% endif %}>Import</button>
+        </div>
+      </form>
+    </div>
+    <div>
+      <p class="section-label">Paste issue</p>
+      <form method="post" action="/intake">
+        <div class="field">
+          <label for="title">Title</label>
+          <input type="text" id="title" name="title" required />
+        </div>
+        <div class="field">
+          <label for="body">Body</label>
+          <textarea id="body" name="body" rows="3" placeholder="Leave empty to test ask_info (EMPTY-001)"></textarea>
+        </div>
+        <div class="intake-actions">
+          <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled title="Disabled in public demo"{% endif %}>Submit</button>
+        </div>
+      </form>
+      {% if demo_mode %}
+      <p style="margin: 10px 0 0; font-size: 12px; color: var(--text-tertiary);">
+        Intake is disabled here. Open a seeded issue below to see triage proposals and policy overrides.
+      </p>
+      {% endif %}
+    </div>
   </div>
-  <div>
-    <p class="section-label">Paste issue</p>
-    <form method="post" action="/intake">
-      <div class="field">
-        <label for="title">Title</label>
-        <input type="text" id="title" name="title" required />
-      </div>
-      <div class="field">
-        <label for="body">Body</label>
-        <textarea id="body" name="body" rows="3" placeholder="Leave empty to test ask_info (EMPTY-001)"></textarea>
-      </div>
-      <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled title="Disabled in public demo"{% endif %}>Submit</button>
-    </form>
-    {% if demo_mode %}
-    <p style="margin: 10px 0 0; font-size: 12px; color: var(--text-tertiary);">
-      Intake is disabled here. Open a seeded issue below to see triage proposals and policy overrides.
-    </p>
-    {% endif %}
+</details>
+
+<div class="inbox-panel">
+  <div class="inbox-header">
+    <h2>All issues</h2>
+    <span class="inbox-count">{{ issues | length }}</span>
   </div>
+  <div class="inbox-columns">
+    <span>ID</span>
+    <span>Title</span>
+    <span>Status</span>
+    <span style="text-align:right">Action</span>
+  </div>
+  <ul class="inbox-list">
+    {% for issue in issues %}
+    <li class="inbox-item">
+      <span class="inbox-id"><a href="/issues/{{ issue.id }}">#{{ issue.id }}</a></span>
+      <span class="inbox-title"><a href="/issues/{{ issue.id }}">{{ issue.title }}</a></span>
+      <span class="col-status status status-{{ issue.status }}">
+        <span class="status-dot" aria-hidden="true"></span>
+        {{ status_label(issue.status) }}
+      </span>
+      <span class="col-action action">{{ action_label(issue.next_action) }}</span>
+    </li>
+    {% else %}
+    <li class="empty-state">No issues yet.</li>
+    {% endfor %}
+  </ul>
 </div>
-
-<div class="inbox-header">
-  <h2>Inbox</h2>
-  <span class="inbox-count">{{ issues | length }} issue{% if issues | length != 1 %}s{% endif %}</span>
-</div>
-
-<ul class="inbox-list">
-  {% for issue in issues %}
-  <li class="inbox-item">
-    <span class="inbox-id"><a href="/issues/{{ issue.id }}">#{{ issue.id }}</a></span>
-    <span class="inbox-title"><a href="/issues/{{ issue.id }}">{{ issue.title }}</a></span>
-    <span class="col-status status status-{{ issue.status }}">{{ issue.status }}</span>
-    <span class="col-action action">{{ issue.next_action or "—" }}</span>
-  </li>
-  {% else %}
-  <li class="empty-state">No issues yet.</li>
-  {% endfor %}
-</ul>
 {% endblock %}

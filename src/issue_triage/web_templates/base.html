@@ -149,49 +149,105 @@
       .btn:hover:not(:disabled) { background: var(--bg-hover); border-color: #333; }
       .btn:disabled { opacity: 0.4; cursor: not-allowed; }
       .btn-primary {
-        background: var(--text);
-        color: var(--bg);
-        border-color: var(--text);
+        background: var(--bg-hover);
+        color: var(--text);
+        border-color: #333;
       }
-      .btn-primary:hover:not(:disabled) { background: #d4d4d4; border-color: #d4d4d4; }
+      .btn-primary:hover:not(:disabled) { background: #222; border-color: #444; }
       .btn-danger { color: var(--danger); border-color: rgba(248, 113, 113, 0.3); background: transparent; }
 
-      /* Intake row — compact, not card-heavy */
-      .intake-row {
+      /* Page intro */
+      .page-intro { margin-bottom: 28px; }
+      .page-intro h1 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.03em;
+        color: var(--text);
+      }
+      .page-intro .tagline {
+        margin: 0;
+        font-size: 14px;
+        color: var(--text-secondary);
+        letter-spacing: -0.01em;
+      }
+
+      /* Collapsible intake — inbox stays primary */
+      .intake-panel {
+        margin-bottom: 24px;
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+      }
+      .intake-panel summary {
+        padding: 10px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        list-style: none;
+        user-select: none;
+      }
+      .intake-panel summary::-webkit-details-marker { display: none; }
+      .intake-panel summary::before { content: "+ "; color: var(--text-tertiary); font-weight: 400; }
+      .intake-panel[open] summary::before { content: "− "; }
+      .intake-panel[open] summary { border-bottom: 1px solid var(--border-light); }
+      .intake-body {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: 24px;
-        margin-bottom: 32px;
-        padding-bottom: 32px;
-        border-bottom: 1px solid var(--border-light);
+        gap: 20px;
+        padding: 16px 14px 14px;
       }
-      @media (max-width: 720px) { .intake-row { grid-template-columns: 1fr; } }
+      @media (max-width: 720px) { .intake-body { grid-template-columns: 1fr; } }
+      .intake-actions { margin-top: 10px; }
 
-      /* Inbox list — Linear-style rows */
+      /* Inbox panel */
+      .inbox-panel {
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius);
+        background: var(--bg-elevated);
+        overflow: hidden;
+      }
       .inbox-header {
         display: flex;
-        align-items: baseline;
+        align-items: center;
         justify-content: space-between;
-        margin-bottom: 8px;
+        padding: 10px 14px;
+        border-bottom: 1px solid var(--border-light);
       }
       .inbox-header h2 {
         margin: 0;
         font-size: 13px;
         font-weight: 500;
-        color: var(--text-secondary);
+        color: var(--text);
       }
       .inbox-count { font-size: 12px; color: var(--text-tertiary); }
+
+      .inbox-columns {
+        display: grid;
+        grid-template-columns: 44px 1fr 140px 72px;
+        gap: 12px;
+        padding: 6px 14px;
+        font-size: 11px;
+        font-weight: 500;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 1px solid var(--border-light);
+      }
+      @media (max-width: 640px) {
+        .inbox-columns { display: none; }
+      }
 
       .inbox-list { list-style: none; margin: 0; padding: 0; }
       .inbox-item {
         display: grid;
-        grid-template-columns: 48px 1fr auto auto;
+        grid-template-columns: 44px 1fr 140px 72px;
         gap: 12px;
         align-items: center;
-        padding: 10px 8px;
-        margin: 0 -8px;
-        border-radius: var(--radius);
+        padding: 11px 14px;
         border-bottom: 1px solid var(--border-light);
+        transition: background 0.1s;
       }
       .inbox-item:hover { background: var(--bg-hover); }
       .inbox-item:last-child { border-bottom: none; }
@@ -218,20 +274,31 @@
       .inbox-title a:hover { color: var(--link); }
 
       .status {
-        font-family: var(--mono);
-        font-size: 11px;
-        color: var(--text-tertiary);
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--text-secondary);
         white-space: nowrap;
       }
-      .status-awaiting_approval { color: var(--policy); }
-      .status-dry_run_recorded { color: var(--success); }
+      .status-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--text-tertiary);
+        flex-shrink: 0;
+      }
+      .status-awaiting_approval { color: #c4a035; }
+      .status-awaiting_approval .status-dot { background: var(--policy); }
+      .status-dry_run_recorded { color: #6ee7a0; }
+      .status-dry_run_recorded .status-dot { background: var(--success); }
       .status-failed, .status-rejected { color: var(--danger); }
+      .status-failed .status-dot, .status-rejected .status-dot { background: var(--danger); }
+      .status-classified .status-dot { background: #6b7280; }
 
       .action {
-        font-family: var(--mono);
-        font-size: 11px;
+        font-size: 12px;
         color: var(--text-tertiary);
-        min-width: 64px;
         text-align: right;
       }
 
@@ -338,6 +405,27 @@
     </style>
   </head>
   <body>
+    {# Human-readable labels — keep CSS class names as raw status for tests #}
+    {% macro status_label(status) -%}
+      {%- if status == 'awaiting_approval' -%}Awaiting approval
+      {%- elif status == 'dry_run_recorded' -%}Done
+      {%- elif status == 'classified' -%}Classified
+      {%- elif status == 'received' -%}Received
+      {%- elif status == 'approved' -%}Approved
+      {%- elif status == 'rejected' -%}Rejected
+      {%- elif status == 'failed' -%}Failed
+      {%- else -%}{{ status }}
+      {%- endif -%}
+    {%- endmacro %}
+    {% macro action_label(action) -%}
+      {%- if action == 'ask_info' -%}Ask info
+      {%- elif action == 'draft_reply' -%}Draft reply
+      {%- elif action == 'route' -%}Route
+      {%- elif action == 'escalate' -%}Escalate
+      {%- else -%}{{ action or "—" }}
+      {%- endif -%}
+    {%- endmacro %}
+
     <div class="app">
       <header class="topbar">
         <div class="topbar-brand"><a href="/">Issue Triage</a></div>
