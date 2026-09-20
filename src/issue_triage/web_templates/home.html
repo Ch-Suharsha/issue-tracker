@@ -1,81 +1,110 @@
 {% extends "base.html" %}
-{% block title %}Inbox — Issue Triage{% endblock %}
+{% block title %}Issue Triage{% endblock %}
 {% block content %}
-<div class="page-intro">
-  <h1>Inbox</h1>
-  <p class="tagline">Water, settle everything.</p>
-</div>
 
-{% if error %}
-<div class="notice notice-error">
-  <strong>Import failed:</strong> {{ error }}
-</div>
-{% endif %}
-
-<details class="intake-panel" {% if not demo_mode %}open{% endif %}>
-  <summary>New issue</summary>
-  <div class="intake-body">
-    <div>
-      <p class="section-label">Import from GitHub</p>
-      <form method="post" action="/intake/github">
-        <div class="field">
-          <label for="github_ref">Issue URL or owner/repo#number</label>
-          <input type="text" id="github_ref" name="github_ref" placeholder="elastic/kibana#12345" required />
-        </div>
-        <div class="intake-actions">
-          <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled{% endif %}>Import</button>
-        </div>
-      </form>
-    </div>
-    <div>
-      <p class="section-label">Paste issue</p>
-      <form method="post" action="/intake">
-        <div class="field">
-          <label for="title">Title</label>
-          <input type="text" id="title" name="title" required />
-        </div>
-        <div class="field">
-          <label for="body">Body</label>
-          <textarea id="body" name="body" rows="3" placeholder="Leave empty to test ask_info (EMPTY-001)"></textarea>
-        </div>
-        <div class="intake-actions">
-          <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled title="Disabled in public demo"{% endif %}>Submit</button>
-        </div>
-      </form>
-      {% if demo_mode %}
-      <p style="margin: 10px 0 0; font-size: 12px; color: var(--text-tertiary);">
-        Intake is disabled here. Open a seeded issue below to see triage proposals and policy overrides.
-      </p>
-      {% endif %}
-    </div>
-  </div>
-</details>
-
-<div class="inbox-panel">
-  <div class="inbox-header">
-    <h2>All issues</h2>
-    <span class="inbox-count">{{ issues | length }}</span>
-  </div>
-  <div class="inbox-columns">
-    <span>ID</span>
-    <span>Title</span>
-    <span>Status</span>
-    <span style="text-align:right">Action</span>
-  </div>
-  <ul class="inbox-list">
-    {% for issue in issues %}
-    <li class="inbox-item">
-      <span class="inbox-id"><a href="/issues/{{ issue.id }}">#{{ issue.id }}</a></span>
-      <span class="inbox-title"><a href="/issues/{{ issue.id }}">{{ issue.title }}</a></span>
-      <span class="col-status status status-{{ issue.status }}">
-        <span class="status-dot" aria-hidden="true"></span>
-        {{ status_label(issue.status) }}
-      </span>
-      <span class="col-action action">{{ action_label(issue.next_action) }}</span>
+<section class="landing" aria-labelledby="landing-title">
+  <p class="landing-eyebrow">AI-assisted workflow · Triage, not resolution</p>
+  <h1 id="landing-title">Structured triage for messy GitHub issues</h1>
+  <p class="landing-lead">
+    This app turns incoming issue title and body into a classified proposal — category, urgency, owner, and next action —
+    then runs deterministic policy rules, gates high-impact paths behind human approval, and records dry-run actions only.
+    Built to show how an embedded maintainer team can triage consistently without auto-writing to production.
+  </p>
+  <ul class="landing-steps">
+    <li>
+      <strong>1 · Classify</strong>
+      <span>Jev (TypeSafe) reads the issue and proposes structure with confidence scores.</span>
     </li>
-    {% else %}
-    <li class="empty-state">No issues yet.</li>
-    {% endfor %}
+    <li>
+      <strong>2 · Policy</strong>
+      <span>Python rules override the model when stakes are high — e.g. SEC-001 on vulnerability language, EMPTY-001 on missing body.</span>
+    </li>
+    <li>
+      <strong>3 · Approve</strong>
+      <span>Triagers review, edit, approve or reject. Low-risk paths can auto-proceed; escalate and p1 always wait for a human.</span>
+    </li>
   </ul>
-</div>
+  <div class="landing-cta-row">
+    <a href="#workspace" class="btn btn-primary landing-cta">Open triage inbox</a>
+    <span class="landing-scroll-hint">or scroll down to import, paste, and review issues</span>
+  </div>
+</section>
+
+<section id="workspace" class="workspace" aria-labelledby="workspace-title">
+  <h2 id="workspace-title" class="workspace-heading">Triage workspace</h2>
+
+  {% if error %}
+  <div class="notice notice-error">
+    <strong>Import failed:</strong> {{ error }}
+  </div>
+  {% endif %}
+
+  <details class="intake-panel" {% if not demo_mode %}open{% endif %}>
+    <summary>New issue</summary>
+    <div class="intake-body">
+      <div>
+        <p class="section-label">Import from GitHub</p>
+        <form method="post" action="/intake/github">
+          <div class="field">
+            <label for="github_ref">Issue URL or owner/repo#number</label>
+            <input type="text" id="github_ref" name="github_ref" placeholder="elastic/kibana#12345" required />
+          </div>
+          <div class="intake-actions">
+            <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled{% endif %}>Import</button>
+          </div>
+        </form>
+      </div>
+      <div>
+        <p class="section-label">Paste issue</p>
+        <form method="post" action="/intake">
+          <div class="field">
+            <label for="title">Title</label>
+            <input type="text" id="title" name="title" required />
+          </div>
+          <div class="field">
+            <label for="body">Body</label>
+            <textarea id="body" name="body" rows="3" placeholder="Leave empty to test ask_info (EMPTY-001)"></textarea>
+          </div>
+          <div class="intake-actions">
+            <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled title="Disabled in public demo"{% endif %}>Submit</button>
+          </div>
+        </form>
+        {% if demo_mode %}
+        <p style="margin: 10px 0 0; font-size: 12px; color: var(--text-tertiary);">
+          Intake is disabled here. Open a seeded issue below to see triage proposals and policy overrides.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+  </details>
+
+  <div class="inbox-panel">
+    <div class="inbox-header">
+      <h2>All issues</h2>
+      <span class="inbox-count">{{ issues | length }}</span>
+    </div>
+    <div class="inbox-columns">
+      <span>ID</span>
+      <span>Title</span>
+      <span>Status</span>
+      <span style="text-align:right">Action</span>
+    </div>
+    <ul class="inbox-list">
+      {% for issue in issues %}
+      <li class="inbox-item">
+        <span class="inbox-id"><a href="/issues/{{ issue.id }}">#{{ issue.id }}</a></span>
+        <span class="inbox-title"><a href="/issues/{{ issue.id }}">{{ issue.title }}</a></span>
+        <span class="col-status status status-{{ issue.status }}">
+          <span class="status-dot" aria-hidden="true"></span>
+          {{ status_label(issue.status) }}
+        </span>
+        <span class="col-action action">{{ action_label(issue.next_action) }}</span>
+      </li>
+      {% else %}
+      <li class="empty-state">No issues yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</section>
+
 {% endblock %}
