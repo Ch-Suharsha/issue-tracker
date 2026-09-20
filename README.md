@@ -113,7 +113,7 @@ A naive rule that escalates on the substring `"security"` would fire constantly 
 
 ## Try the demo
 
-**Live demo (after deploy):** `https://YOUR-SERVICE.onrender.com` — replace with your Render URL once Profile A is live. See [docs/deploy.md](docs/deploy.md).
+**Live demo:** [https://issue-triage.onrender.com](https://issue-triage.onrender.com) — Profile A public demo (`DEMO_MODE=true`, read-only). See [docs/deploy.md](docs/deploy.md).
 
 | Profile | URL | Classifier | Who it's for |
 |---------|-----|------------|--------------|
