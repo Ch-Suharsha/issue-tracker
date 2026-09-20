@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{% block title %}Issue Triage{% endblock %}</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 900px; margin: 2rem auto; padding: 0 1rem; }
+      table { width: 100%; border-collapse: collapse; }
+      th, td { border-bottom: 1px solid #ddd; padding: 0.5rem; text-align: left; }
+      .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; background: #eee; font-size: 0.85rem; }
+      .policy { background: #ffe8cc; }
+      textarea, input[type=text] { width: 100%; }
+      button { margin-right: 0.5rem; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1><a href="/">Issue Triage</a></h1>
+      {% if demo_mode %}<p><strong>Public demo</strong> — {{ demo_mode_message }}</p>{% endif %}
+    </header>
+    {% block content %}{% endblock %}
+  </body>
+</html>

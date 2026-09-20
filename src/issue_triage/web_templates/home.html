@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Issue Triage — Intake{% endblock %}
+{% block content %}
+{% if error %}
+<section class="error">
+  <p><strong>Import failed:</strong> {{ error }}</p>
+</section>
+{% endif %}
+
+<section>
+  <h2>Import from GitHub</h2>
+  <form method="post" action="/intake/github">
+    <p>
+      <label>Issue URL or owner/repo#number<br />
+        <input type="text" name="github_ref" placeholder="elastic/kibana#12345" required />
+      </label>
+    </p>
+    <button type="submit" {% if demo_mode %}disabled{% endif %}>Import and triage</button>
+  </form>
+</section>
+
+<section>
+  <h2>Paste issue</h2>
+  <form method="post" action="/intake">
+    <p>
+      <label>Title<br /><input type="text" name="title" required /></label>
+    </p>
+    <p>
+      <label>Body<br /><textarea name="body" rows="8" placeholder="Leave empty to test ask_info (EMPTY-001)"></textarea></label>
+    </p>
+    <button type="submit" {% if demo_mode %}disabled title="Disabled in public demo"{% endif %}>Submit for triage</button>
+  </form>
+  {% if demo_mode %}
+  <p><em>Intake is disabled here. Open a seeded issue below to see triage proposals and policy overrides.</em></p>
+  {% endif %}
+</section>
+
+<section>
+  <h2>Recent issues</h2>
+  <table>
+    <thead>
+      <tr><th>ID</th><th>Title</th><th>Status</th><th>Action</th></tr>
+    </thead>
+    <tbody>
+      {% for issue in issues %}
+      <tr>
+        <td><a href="/issues/{{ issue.id }}">#{{ issue.id }}</a></td>
+        <td>{{ issue.title }}</td>
+        <td>{{ issue.status }}</td>
+        <td>{{ issue.next_action or "—" }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4">No issues yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

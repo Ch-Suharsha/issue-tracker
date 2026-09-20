@@ -1,0 +1,19 @@
+# Render Blueprint — issue-triage Profile A (public demo)
+# AFTER apply: paste Neon pooled DATABASE_URL in Render dashboard (sync: false below).
+# Do NOT set TYPESAFE_API_KEY on this service. See docs/deploy.md.
+
+services:
+  - type: web
+    name: issue-triage
+    runtime: python
+    plan: free
+    buildCommand: curl -LsSf https://astral.sh/uv/install.sh | sh && export PATH="$HOME/.local/bin:$PATH" && uv sync
+    startCommand: uv run uvicorn issue_triage.app:create_app --factory --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11"
+      - key: DEMO_MODE
+        value: "true"
+      - key: DATABASE_URL
+        sync: false

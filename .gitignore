@@ -1,6 +1,9 @@
 # OS / editor
 .DS_Store
-.cursor/
+.venv/
+dev.db
+*.db
+.python-version
 
 # Secrets & local env
 .env
@@ -19,3 +22,6 @@ node_modules/
 # Office scratch / unrelated exports
 *.docx
 ~$*
+
+# Eval corpus and results (issue bodies stay local)
+data/

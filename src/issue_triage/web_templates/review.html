@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}Review #{{ issue.id }}{% endblock %}
+{% block content %}
+{% if error %}
+<section class="error">
+  <p><strong>Could not approve:</strong> {{ error }}</p>
+</section>
+{% endif %}
+
+<section>
+  <h2>Issue #{{ issue.id }}</h2>
+  <p><strong>{{ issue.title }}</strong></p>
+  <pre>{{ issue.body or "(empty body)" }}</pre>
+
+  {% if issue.status == "failed" %}
+  <section class="error">
+    <p><strong>Classifier failed:</strong> {{ issue.reasoning }}</p>
+    <p><em>Check your API key, network, or re-submit the issue after fixing configuration.</em></p>
+  </section>
+  {% else %}
+  <h3>Proposal</h3>
+  <ul>
+    <li>Category: {{ issue.category or "—" }}</li>
+    <li>Urgency: {{ issue.urgency or "—" }}</li>
+    <li>Owner: {{ issue.owner or "—" }}</li>
+    <li>Business action: {{ issue.next_action or "—" }}</li>
+    <li>Reasoning: {{ issue.reasoning or "—" }}</li>
+  </ul>
+
+  {% if issue.policy_rule_id %}
+  <p class="badge policy">Policy {{ issue.policy_rule_id }}: {{ issue.policy_reason }}</p>
+  {% endif %}
+  {% endif %}
+
+  <p>Status: <strong>{{ issue.status }}</strong> · Version {{ issue.version }}</p>
+
+  {% if issue.status == "awaiting_approval" %}
+  <form method="post" action="/issues/{{ issue.id }}/approve">
+    <input type="hidden" name="version" value="{{ issue.version }}" />
+    <p>
+      <label>Urgency<br />
+        <select name="urgency">
+          <option value="p1" {% if issue.urgency == "p1" %}selected{% endif %}>p1 — critical</option>
+          <option value="p2" {% if issue.urgency == "p2" %}selected{% endif %}>p2 — medium</option>
+          <option value="p3" {% if issue.urgency == "p3" %}selected{% endif %}>p3 — low</option>
+        </select>
+      </label>
+    </p>
+    <p><label>Owner<br /><input type="text" name="owner" value="{{ issue.owner }}" /></label></p>
+    <p>
+      <label>Action<br />
+        <select name="next_action">
+          <option value="ask_info" {% if issue.next_action == "ask_info" %}selected{% endif %}>ask_info</option>
+          <option value="draft_reply" {% if issue.next_action == "draft_reply" %}selected{% endif %}>draft_reply</option>
+          <option value="route" {% if issue.next_action == "route" %}selected{% endif %}>route</option>
+          <option value="escalate" {% if issue.next_action == "escalate" %}selected{% endif %}>escalate</option>
+        </select>
+      </label>
+    </p>
+    <button type="submit" {% if demo_mode %}disabled{% endif %}>Approve</button>
+  </form>
+  <form method="post" action="/issues/{{ issue.id }}/reject">
+    <input type="hidden" name="version" value="{{ issue.version }}" />
+    <button type="submit" {% if demo_mode %}disabled{% endif %}>Reject</button>
+  </form>
+  {% endif %}
+
+  {% if issue.dry_run %}
+  <h3>Dry-run action</h3>
+  <p><strong>Would comment:</strong></p>
+  <pre>{{ issue.dry_run.comment_body }}</pre>
+  <p>Labels: {{ issue.dry_run.labels | join(", ") }}</p>
+  <p>Owner: {{ issue.dry_run.owner }} · Action: {{ issue.dry_run.action }}</p>
+  {% endif %}
+</section>
+{% endblock %}
