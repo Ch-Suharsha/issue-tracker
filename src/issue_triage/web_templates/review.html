@@ -1,97 +1,93 @@
 {% extends "base.html" %}
-{% block title %}Review #{{ issue.id }} — Issue Triage{% endblock %}
+{% block title %}#{{ issue.id }} — Issue Triage{% endblock %}
 {% block content %}
-<nav class="breadcrumb"><a href="/">Inbox</a> / Issue #{{ issue.id }}</nav>
+<p class="review-back"><a href="/">← Inbox</a></p>
 
 {% if error %}
-<div class="alert alert-error">
+<div class="notice notice-error">
   <strong>Could not approve:</strong> {{ error }}
 </div>
 {% endif %}
 
-<h1 class="page-title">{{ issue.title }}</h1>
-<p class="meta-line">Status <strong>{{ issue.status }}</strong> · Version {{ issue.version }}</p>
+<h1 class="review-title">{{ issue.title }}</h1>
+<p class="review-meta">{{ issue.status }} · Version {{ issue.version }}</p>
 
 {% if issue.status == "failed" %}
-<div class="alert alert-error">
+<div class="notice notice-error">
   <strong>Classifier failed:</strong> {{ issue.reasoning }}
-  <p style="margin: 0.5rem 0 0; font-size: 0.85rem; opacity: 0.9;">Check your API key, network, or re-submit after fixing configuration.</p>
 </div>
 {% else %}
 
 {% if issue.policy_rule_id %}
-<p class="badge badge-policy">Policy {{ issue.policy_rule_id }}: {{ issue.policy_reason }}</p>
+<div class="notice notice-policy">
+  <strong>Policy {{ issue.policy_rule_id }}</strong> — {{ issue.policy_reason }}
+</div>
 {% endif %}
 
-<div class="review-grid">
-  <article class="card">
-    <h2 class="card-title">Issue body</h2>
+<div class="review-split">
+  <div>
+    <p class="section-label">Body</p>
     <pre class="issue-body">{{ issue.body or "(empty body)" }}</pre>
-  </article>
-
-  <article class="card">
-    <h2 class="card-title">Proposal</h2>
-    <ul class="proposal-list">
-      <li><span class="label">Category</span><span class="value">{{ issue.category or "—" }}</span></li>
-      <li><span class="label">Urgency</span><span class="value">{{ issue.urgency or "—" }}</span></li>
-      <li><span class="label">Owner</span><span class="value">{{ issue.owner or "—" }}</span></li>
-      <li><span class="label">Action</span><span class="value">{{ issue.next_action or "—" }}</span></li>
-    </ul>
+  </div>
+  <div>
+    <p class="section-label">Proposal</p>
+    <table class="proposal-table">
+      <tr><td class="k">Category</td><td class="v">{{ issue.category or "—" }}</td></tr>
+      <tr><td class="k">Urgency</td><td class="v">{{ issue.urgency or "—" }}</td></tr>
+      <tr><td class="k">Owner</td><td class="v">{{ issue.owner or "—" }}</td></tr>
+      <tr><td class="k">Action</td><td class="v">{{ issue.next_action or "—" }}</td></tr>
+    </table>
     {% if issue.reasoning %}
-    <div class="reasoning-box">{{ issue.reasoning }}</div>
+    <div class="reasoning">{{ issue.reasoning }}</div>
     {% endif %}
-  </article>
+  </div>
 </div>
 
 {% if issue.status == "awaiting_approval" %}
-<article class="card" style="margin-top: 1.25rem;">
-  <h2 class="card-title">Triager decision</h2>
+<div class="decision-panel">
+  <p class="section-label">Triager decision</p>
   <form method="post" action="/issues/{{ issue.id }}/approve">
     <input type="hidden" name="version" value="{{ issue.version }}" />
-    <div class="review-grid" style="gap: 1rem;">
+    <div class="decision-fields">
       <div class="field">
         <label for="urgency">Urgency</label>
         <select id="urgency" name="urgency">
-          <option value="p1" {% if issue.urgency == "p1" %}selected{% endif %}>p1 — critical</option>
-          <option value="p2" {% if issue.urgency == "p2" %}selected{% endif %}>p2 — medium</option>
-          <option value="p3" {% if issue.urgency == "p3" %}selected{% endif %}>p3 — low</option>
+          <option value="p1" {% if issue.urgency == "p1" %}selected{% endif %}>p1</option>
+          <option value="p2" {% if issue.urgency == "p2" %}selected{% endif %}>p2</option>
+          <option value="p3" {% if issue.urgency == "p3" %}selected{% endif %}>p3</option>
         </select>
       </div>
       <div class="field">
         <label for="owner">Owner</label>
         <input type="text" id="owner" name="owner" value="{{ issue.owner }}" />
       </div>
+      <div class="field">
+        <label for="next_action">Action</label>
+        <select id="next_action" name="next_action">
+          <option value="ask_info" {% if issue.next_action == "ask_info" %}selected{% endif %}>ask_info</option>
+          <option value="draft_reply" {% if issue.next_action == "draft_reply" %}selected{% endif %}>draft_reply</option>
+          <option value="route" {% if issue.next_action == "route" %}selected{% endif %}>route</option>
+          <option value="escalate" {% if issue.next_action == "escalate" %}selected{% endif %}>escalate</option>
+        </select>
+      </div>
     </div>
-    <div class="field">
-      <label for="next_action">Action</label>
-      <select id="next_action" name="next_action">
-        <option value="ask_info" {% if issue.next_action == "ask_info" %}selected{% endif %}>ask_info</option>
-        <option value="draft_reply" {% if issue.next_action == "draft_reply" %}selected{% endif %}>draft_reply</option>
-        <option value="route" {% if issue.next_action == "route" %}selected{% endif %}>route</option>
-        <option value="escalate" {% if issue.next_action == "escalate" %}selected{% endif %}>escalate</option>
-      </select>
-    </div>
-    <div class="btn-row">
+    <div class="decision-actions">
       <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled{% endif %}>Approve</button>
     </div>
   </form>
-  <form method="post" action="/issues/{{ issue.id }}/reject" style="margin-top: 0.5rem;">
+  <form method="post" action="/issues/{{ issue.id }}/reject" style="display:inline;">
     <input type="hidden" name="version" value="{{ issue.version }}" />
-    <button type="submit" class="btn btn-danger" {% if demo_mode %}disabled{% endif %}>Reject</button>
+    <button type="submit" class="btn btn-danger" {% if demo_mode %}disabled{% endif %} style="margin-top:8px;">Reject</button>
   </form>
-</article>
+</div>
 {% endif %}
 
 {% if issue.dry_run %}
-<article class="card dry-run">
-  <h2 class="card-title">Dry-run action</h2>
-  <p style="margin: 0; font-size: 0.82rem; color: var(--text-dim);">Would comment on GitHub (not executed in v1):</p>
+<div class="dry-run-block">
+  <p class="section-label" style="margin-bottom:4px;">Dry-run</p>
   <pre>{{ issue.dry_run.comment_body }}</pre>
-  <p style="margin: 0.75rem 0 0; font-size: 0.82rem; color: var(--text-muted);">
-    Labels: <span class="action-tag">{{ issue.dry_run.labels | join(", ") }}</span>
-    · Owner: {{ issue.dry_run.owner }} · Action: {{ issue.dry_run.action }}
-  </p>
-</article>
+  <p class="dry-run-meta">{{ issue.dry_run.labels | join(", ") }} · {{ issue.dry_run.owner }} · {{ issue.dry_run.action }}</p>
+</div>
 {% endif %}
 
 {% endif %}
