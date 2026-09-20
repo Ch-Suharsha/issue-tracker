@@ -1,58 +1,87 @@
 {% extends "base.html" %}
-{% block title %}Issue Triage — Intake{% endblock %}
+{% block title %}Issue Triage — Inbox{% endblock %}
 {% block content %}
 {% if error %}
-<section class="error">
-  <p><strong>Import failed:</strong> {{ error }}</p>
-</section>
+<div class="alert alert-error">
+  <strong>Import failed:</strong> {{ error }}
+</div>
 {% endif %}
 
-<section>
-  <h2>Import from GitHub</h2>
-  <form method="post" action="/intake/github">
-    <p>
-      <label>Issue URL or owner/repo#number<br />
-        <input type="text" name="github_ref" placeholder="elastic/kibana#12345" required />
-      </label>
-    </p>
-    <button type="submit" {% if demo_mode %}disabled{% endif %}>Import and triage</button>
-  </form>
+<section class="hero">
+  <p class="hero-eyebrow">AI-assisted workflow</p>
+  <h1>AI proposes. Policy decides. You approve.</h1>
+  <p class="hero-lead">
+    Turn messy GitHub issues into structured actions — with deterministic guardrails when stakes are high.
+  </p>
+  <ol class="pipeline" aria-label="Triage pipeline">
+    <li><span class="step-num">1</span> <strong>Intake</strong></li>
+    <li class="arrow" aria-hidden="true">→</li>
+    <li><span class="step-num">2</span> <strong>Classify</strong> <span>(Jev)</span></li>
+    <li class="arrow" aria-hidden="true">→</li>
+    <li class="highlight"><span class="step-num">3</span> <strong>Policy</strong> <span>(SEC-001…)</span></li>
+    <li class="arrow" aria-hidden="true">→</li>
+    <li><span class="step-num">4</span> <strong>Approve</strong></li>
+    <li class="arrow" aria-hidden="true">→</li>
+    <li><span class="step-num">5</span> <strong>Dry-run</strong></li>
+  </ol>
 </section>
 
-<section>
-  <h2>Paste issue</h2>
-  <form method="post" action="/intake">
-    <p>
-      <label>Title<br /><input type="text" name="title" required /></label>
-    </p>
-    <p>
-      <label>Body<br /><textarea name="body" rows="8" placeholder="Leave empty to test ask_info (EMPTY-001)"></textarea></label>
-    </p>
-    <button type="submit" {% if demo_mode %}disabled title="Disabled in public demo"{% endif %}>Submit for triage</button>
-  </form>
-  {% if demo_mode %}
-  <p><em>Intake is disabled here. Open a seeded issue below to see triage proposals and policy overrides.</em></p>
-  {% endif %}
-</section>
+<section class="grid-2">
+  <div>
+    <article class="card">
+      <h2 class="card-title">Import from GitHub</h2>
+      <form method="post" action="/intake/github">
+        <div class="field">
+          <label for="github_ref">Issue URL or owner/repo#number</label>
+          <input type="text" id="github_ref" name="github_ref" placeholder="elastic/kibana#12345" required />
+        </div>
+        <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled{% endif %}>Import and triage</button>
+      </form>
+    </article>
 
-<section>
-  <h2>Recent issues</h2>
-  <table>
-    <thead>
-      <tr><th>ID</th><th>Title</th><th>Status</th><th>Action</th></tr>
-    </thead>
-    <tbody>
-      {% for issue in issues %}
-      <tr>
-        <td><a href="/issues/{{ issue.id }}">#{{ issue.id }}</a></td>
-        <td>{{ issue.title }}</td>
-        <td>{{ issue.status }}</td>
-        <td>{{ issue.next_action or "—" }}</td>
-      </tr>
-      {% else %}
-      <tr><td colspan="4">No issues yet.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+    <article class="card">
+      <h2 class="card-title">Paste issue</h2>
+      <form method="post" action="/intake">
+        <div class="field">
+          <label for="title">Title</label>
+          <input type="text" id="title" name="title" required />
+        </div>
+        <div class="field">
+          <label for="body">Body</label>
+          <textarea id="body" name="body" rows="6" placeholder="Leave empty to test ask_info (EMPTY-001)"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary" {% if demo_mode %}disabled title="Disabled in public demo"{% endif %}>Submit for triage</button>
+      </form>
+      {% if demo_mode %}
+      <p class="card-note"><em>Intake is disabled here. Open a seeded issue in the inbox to see triage proposals and policy overrides.</em></p>
+      {% endif %}
+    </article>
+  </div>
+
+  <article class="card">
+    <h2 class="card-title">Inbox</h2>
+    <table class="inbox-table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Title</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for issue in issues %}
+        <tr>
+          <td class="issue-id"><a href="/issues/{{ issue.id }}">#{{ issue.id }}</a></td>
+          <td class="issue-title"><a href="/issues/{{ issue.id }}">{{ issue.title }}</a></td>
+          <td><span class="status-pill status-{{ issue.status }}">{{ issue.status }}</span></td>
+          <td class="action-tag">{{ issue.next_action or "—" }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" style="color: var(--text-dim); padding: 1.5rem 0;">No issues yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </article>
 </section>
 {% endblock %}
