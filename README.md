@@ -113,12 +113,12 @@ A naive rule that escalates on the substring `"security"` would fire constantly 
 
 ## Try the demo
 
-**Live demo:** [https://issue-triage.onrender.com](https://issue-triage.onrender.com) — Profile A public demo (`DEMO_MODE=true`, read-only). See [docs/deploy.md](docs/deploy.md).
+**Live app:** [https://issue-triage.onrender.com](https://issue-triage.onrender.com) — full workflow with **Jev** (TypeSafe) classifier. Submit an issue or import from GitHub. See [docs/deploy.md](docs/deploy.md).
 
-| Profile | URL | Classifier | Who it's for |
-|---------|-----|------------|--------------|
-| Public demo | Render + `DEMO_MODE=true` | FakeClassifier (seeded) | Recruiters |
-| Live Jev | Private/local + `TYPESAFE_API_KEY` | Jev (TypeSafe) | You / trusted users |
+| Mode | Where | Classifier |
+|------|-------|------------|
+| Production | Render + Neon | Jev (`TYPESAFE_API_KEY`) |
+| Read-only demo | Local `DEMO_MODE=true` | FakeClassifier (seeded) |
 
 Architecture: **FastAPI + Jinja** (not Streamlit). One Python web service, Neon Postgres, no cron.
 

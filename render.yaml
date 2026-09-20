@@ -1,6 +1,6 @@
-# Render Blueprint — issue-triage Profile A (public demo)
-# AFTER apply: paste Neon pooled DATABASE_URL in Render dashboard (sync: false below).
-# Do NOT set TYPESAFE_API_KEY on this service. See docs/deploy.md.
+# Render Blueprint — issue-triage (live Jev + full workflow)
+# AFTER apply: paste DATABASE_URL and TYPESAFE_API_KEY in Render dashboard (sync: false below).
+# See docs/deploy.md.
 
 services:
   - type: web
@@ -14,6 +14,10 @@ services:
       - key: PYTHON_VERSION
         value: "3.11"
       - key: DEMO_MODE
-        value: "true"
+        value: "false"
+      - key: JEV_MIN_CONFIDENCE
+        value: "0.5"
       - key: DATABASE_URL
+        sync: false
+      - key: TYPESAFE_API_KEY
         sync: false
