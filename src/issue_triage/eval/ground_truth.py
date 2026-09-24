@@ -48,6 +48,14 @@ class GroundTruth:
     should_escalate: bool
     has_security_language: bool
 
+    @property
+    def requires_security_escalation(self) -> bool:
+        return self.has_security_language
+
+    @property
+    def requires_critical_routing(self) -> bool:
+        return self.impact == "impact:critical" and not self.has_security_language
+
 
 def primary_impact_label(labels: list[str]) -> Optional[ImpactLabel]:
     impacts = [

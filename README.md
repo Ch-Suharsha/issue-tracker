@@ -6,31 +6,40 @@ Built as an FDE portfolio proof. Evaluation replays filtered public Kibana Issue
 
 ---
 
-## Evaluation — headline metric
+## Evaluation — headline metrics
 
-**Missed escalation** (safety challenge set): share of cases that should have escalated (or forced approval on a critical path) but did not.
+Corpus: 5,447 Kibana issues with fetched bodies (99.9% non-empty). Eval replays title+body through the live pipeline offline.
 
-Run `uv run eval` to generate metrics (EvalRunner — ticket 08). Example output format:
+**Security escalation set** (n=211, SEC-001 vuln-language in text): headline is **missed escalation rate**.
 
-| Metric | Safety set | Operational set |
-|--------|------------|-----------------|
-| **Missed escalation** | **TBD** | — |
-| False escalation rate | TBD | TBD |
-| Routing agreement (bucket) | — | TBD |
-| Urgency agreement | — | TBD |
-| Human intervention rate | TBD | TBD |
+| Metric | Security escalation | Critical routing (n=351) | Test (n=1362) |
+|--------|---------------------|--------------------------|---------------|
+| **Missed escalation (combined)** | **0%** | — | — |
+| False escalation rate | — | — | **1.2%** |
+| Owner agreement | 94.8% | 67.5% | 68.7% |
+| Urgency agreement | 7.6% | 4.3% | 46.3% |
+| Human intervention rate | 100% | 98.3% | 85.3% |
 
-Supporting table (baselines & ablations — placeholder until eval ships):
+Ablation (security escalation missed rate):
 
-| System | Missed escalation (safety) | Notes |
-|--------|----------------------------|-------|
-| Majority class baseline | TBD | Always `route` / p3 |
-| Classical baseline | TBD | TF-IDF + logistic |
-| Model only | TBD | No policy layer |
-| Policy only | TBD | Rules without LLM |
-| **LLM + policy (v1)** | **TBD** | Shipped system |
+| System | Missed escalation | Notes |
+|--------|-------------------|-------|
+| **LLM + policy (combined)** | **0%** | Jev + SEC-001 + monotonic EMPTY-001 |
+| Rules only | 0% | SEC-001 without LLM |
+| Model only (Jev) | 97.2% | Policy layer required |
+| TF-IDF baseline | 85.3% | No policy |
+| Majority baseline | 100% | Always route |
 
-Ground truth is **noisy**: maintainer labels on closed Issues are reference decisions, often applied late or with hindsight. We report agreement and safety separately.
+Run eval with a body-complete corpus:
+
+```bash
+PYTHONPATH=src uv run python -m issue_triage.eval.run ingest --fetch-bodies --sleep-seconds 1
+PYTHONPATH=src uv run python -m issue_triage.eval.run run --classifier jev
+```
+
+See [docs/eval/failure-diagnosis.md](docs/eval/failure-diagnosis.md) for methodology and failure-mode analysis.
+
+Ground truth is **noisy**: maintainer labels are reference decisions. Security-language cases use a strict escalation contract; critical routing uses separate operational metrics.
 
 ---
 
@@ -61,6 +70,32 @@ Issue (title, body) → Classifier proposal → Policy (deterministic overrides)
 ```
 
 Policy runs **after** the model and can override urgency, owner, and action. Security rules match **vulnerability language** (e.g. password reset, auth bypass), not the bare word “security” (Elastic Security product noise).
+
+## System architecture
+
+![Issue Triage system architecture](docs/system-architecture.png)
+
+The system is intentionally a small, interviewable Python application with two connected paths: a live triage workflow and a separate offline evaluation workflow.
+
+### Live triage path
+
+1. **Intake** — a Triager pastes an issue title and body, or imports a public GitHub issue by URL or `owner/repo#number`. GitHub is read-only and only title/body are passed into triage.
+2. **Application layer** — FastAPI serves the inbox and review pages with Jinja templates. `TriagePipeline` is the central behavior seam.
+3. **Classifier port** — the pipeline calls one structured classifier. Local and public-demo runs use the deterministic `FakeClassifier`; private live runs can select TypeSafe Jev through the same `Classifier` interface.
+4. **Policy and approval** — Python policy rules run after classification. `SEC-001` forces escalation for vulnerability language, while `EMPTY-001` requests missing information without downgrading a high-stakes proposal. The approval policy requires a human checkpoint for `p1`, `escalate`, policy overrides, and low-confidence proposals; low-risk p3 paths may auto-proceed.
+5. **Review and action** — the Triager can inspect reasoning, edit urgency/owner/action, approve, or reject. Approved work produces a deterministic template comment, labels, and owner assignment as a dry-run record only.
+6. **Persistence and audit** — SQLAlchemy stores the workflow row, version, proposal, policy result, approval state, and dry-run output. An append-only decision log records intake, classification, approval/rejection, failures, and dry-run events. Optimistic concurrency prevents silent overwrites.
+
+### Offline evaluation path
+
+The evaluation path does not use live workflow state. It ingests a filtered historical Kibana corpus, fetches and caches issue bodies, validates corpus quality, and replays title/body-only inputs through the classifier and policy layers. `EvalRunner` compares the combined system with model-only, rules-only, majority, and TF-IDF baselines across security-escalation, critical-routing, and temporal test splits. Per-record traces preserve the proposal, policy rule, merged outcome, approval requirement, and metric result for failure review.
+
+### Deployment and safety boundaries
+
+- **Public demo:** Render + Neon with `DEMO_MODE=true`, seeded examples, `FakeClassifier`, and mutating routes disabled.
+- **Private live profile:** `DEMO_MODE=false`, a separate database, optional GitHub import, and Jev selected by `TYPESAFE_API_KEY`.
+- **No upstream writes:** the application never posts comments, changes labels, assigns owners, closes issues, or modifies `elastic/kibana`.
+- **No background orchestration:** one FastAPI service and ordinary Python workflow code are the source of truth; there is no LangGraph, queue, cron job, or separate frontend service.
 
 ### 5. How we evaluate
 
@@ -168,4 +203,4 @@ By default the app uses `FakeClassifier` (no API key, deterministic demos). Set 
 - **No LangGraph** in v1 — workflow code is the source of truth.
 - Kibana is the **eval domain**, not the product name.
 
-Docs: [CONTEXT.md](CONTEXT.md) · [ADRs](docs/adr/) · [Discovery brief](docs/discovery-brief.md)
+Docs: [ADRs](docs/adr/) · [Discovery brief](docs/discovery-brief.md) · [Deployment guide](docs/deploy.md)

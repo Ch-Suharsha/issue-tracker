@@ -9,6 +9,7 @@ from issue_triage.eval.corpus import load_corpus, passes_ingest_filters, record_
 from issue_triage.eval.ground_truth import ground_truth_from_record, matches_security_language
 from issue_triage.eval.ingest import ingest_from_audit
 from issue_triage.eval.owner_buckets import primary_team_bucket, team_label_to_bucket
+from issue_triage.eval.corpus_quality import assert_corpus_body_quality, corpus_body_stats
 from issue_triage.eval.runner import EvalRunner, NeutralClassifier, PipelinePredictor, score_records
 from issue_triage.eval.splits import build_splits, build_safety_set
 from issue_triage.classifier import FakeClassifier
@@ -117,10 +118,18 @@ def test_eval_runner_catches_security_language_cases(fixture_corpus: Path):
     rules_only = PipelinePredictor(NeutralClassifier(), apply_rules=True)
 
     combined_metrics = score_records(
-        security_records, combined, mode="combined", split="safety", safety_split=True
+        security_records,
+        combined,
+        mode="combined",
+        split="security_escalation",
+        split_kind="security_escalation",
     )
     rules_metrics = score_records(
-        security_records, rules_only, mode="rules_only", split="safety", safety_split=True
+        security_records,
+        rules_only,
+        mode="rules_only",
+        split="security_escalation",
+        split_kind="security_escalation",
     )
     assert combined_metrics.missed_escalations == 0
     assert rules_metrics.missed_escalations == 0
@@ -129,8 +138,61 @@ def test_eval_runner_catches_security_language_cases(fixture_corpus: Path):
 def test_model_only_can_miss_escalation(fixture_corpus: Path):
     runner = EvalRunner.from_corpus(fixture_corpus)
     results = runner.run(modes=["model_only"])
-    model_safety = next(m for m in results["metrics"] if m["mode"] == "model_only" and m["split"] == "safety")
-    assert model_safety["missed_escalations"] >= 1
+    model_security = next(
+        m
+        for m in results["metrics"]
+        if m["mode"] == "model_only" and m["split"] == "security_escalation"
+    )
+    assert model_security["missed_escalations"] >= 1
+
+
+def test_corpus_body_stats(fixture_corpus: Path):
+    records = load_corpus(fixture_corpus)
+    stats = corpus_body_stats(records)
+    assert stats.total == len(records)
+    assert stats.adequate_rate == 1.0
+    assert_corpus_body_quality(records, min_non_empty_rate=0.95)
+
+
+def test_corpus_body_quality_fails_on_empty(tmp_path: Path):
+    corpus_path = tmp_path / "empty.jsonl"
+    corpus_path.write_text(
+        json.dumps(
+            {
+                "number": 1,
+                "title": "No body issue",
+                "body": "",
+                "labels": ["bug", "impact:high", "Team:Search"],
+                "created_at": "2024-01-01T00:00:00Z",
+                "author": "user",
+                "author_type": "User",
+                "url": "",
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    records = load_corpus(corpus_path)
+    with pytest.raises(AssertionError, match="non-empty body rate"):
+        assert_corpus_body_quality(records, min_non_empty_rate=0.95)
+
+
+def test_eval_runner_writes_traces(tmp_path: Path, fixture_corpus: Path):
+    runner = EvalRunner.from_corpus(fixture_corpus)
+    output = runner.run_and_write(
+        tmp_path / "results",
+        modes=["combined"],
+        collect_traces=True,
+    )
+    trace_files = list((tmp_path / "results").glob("trace_*.jsonl"))
+    assert output.exists()
+    assert len(trace_files) == 1
+    lines = trace_files[0].read_text(encoding="utf-8").strip().splitlines()
+    assert len(lines) >= 1
+    row = json.loads(lines[0])
+    assert "proposal" in row
+    assert "merged" in row
+    assert row["mode"] == "combined"
 
 
 def test_score_records_metrics():
@@ -147,6 +209,12 @@ def test_score_records_metrics():
     )
     assert record is not None
     predictor = PipelinePredictor(FakeClassifier(), apply_rules=True)
-    metrics = score_records([record], predictor, mode="combined", split="safety", safety_split=True)
+    metrics = score_records(
+        [record],
+        predictor,
+        mode="combined",
+        split="security_escalation",
+        split_kind="security_escalation",
+    )
     assert metrics.missed_escalations == 0
     assert metrics.n == 1

@@ -1,0 +1,175 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1100" viewBox="0 0 1600 1100" role="img" aria-labelledby="title desc">
+  <title id="title">Issue Triage system architecture</title>
+  <desc id="desc">Architecture diagram showing the FastAPI live triage workflow, classifier and policy layers, persistence, dry-run boundary, deployment profiles, and the separate offline evaluation pipeline.</desc>
+  <defs>
+    <linearGradient id="canvas" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0f16"/>
+      <stop offset="1" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#182231"/>
+      <stop offset="1" stop-color="#111a27"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#65d6c5"/>
+      <stop offset="1" stop-color="#72a7ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000" flood-opacity="0.28"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8ea5bf"/>
+    </marker>
+    <marker id="arrowAccent" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L10,5 L0,10 z" fill="#65d6c5"/>
+    </marker>
+    <style>
+      .title { font: 700 34px Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; fill: #f8fafc; }
+      .subtitle { font: 400 16px Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; fill: #9fb0c5; }
+      .section { font: 700 16px Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; letter-spacing: 1.5px; fill: #65d6c5; }
+      .box-title { font: 700 18px Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; fill: #f8fafc; }
+      .box-text { font: 400 14px Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; fill: #b8c5d6; }
+      .small { font: 400 12px Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; fill: #8fa2b8; }
+      .label { font: 600 12px Inter, ui-sans-serif, system-ui, -apple-system, sans-serif; fill: #d6e1ef; }
+      .panel { fill: url(#panel); stroke: #2b3b50; stroke-width: 1.5; }
+      .module { fill: #152130; stroke: #46617d; stroke-width: 1.5; }
+      .external { fill: #14231f; stroke: #3b8c7d; stroke-width: 1.5; }
+      .store { fill: #211e2d; stroke: #836dac; stroke-width: 1.5; }
+      .guard { fill: #2a2417; stroke: #c39b52; stroke-width: 1.5; }
+      .dashed { stroke-dasharray: 8 7; }
+      .flow { stroke: #8ea5bf; stroke-width: 2.2; fill: none; marker-end: url(#arrow); }
+      .flow-accent { stroke: #65d6c5; stroke-width: 2.6; fill: none; marker-end: url(#arrowAccent); }
+      .boundary { fill: none; stroke: #3b4b60; stroke-width: 1.5; stroke-dasharray: 10 8; }
+    </style>
+  </defs>
+
+  <rect width="1600" height="1100" fill="url(#canvas)"/>
+  <rect x="40" y="34" width="1520" height="1032" rx="24" fill="none" stroke="#223044" stroke-width="1"/>
+
+  <text x="78" y="92" class="title">Issue Triage — system architecture</text>
+  <text x="78" y="122" class="subtitle">AI-assisted intake and policy-checked triage. Triage is not resolution; external actions remain dry-run only.</text>
+  <rect x="78" y="150" width="1444" height="3" rx="2" fill="url(#accent)"/>
+
+  <!-- Live system boundary -->
+  <rect x="70" y="190" width="1460" height="520" rx="20" class="boundary"/>
+  <text x="94" y="220" class="section">LIVE TRIAGE SERVICE</text>
+  <text x="1320" y="220" class="small">FastAPI + Jinja · one web service</text>
+
+  <!-- Actors and intake -->
+  <rect x="94" y="264" width="190" height="112" rx="14" class="external" filter="url(#shadow)"/>
+  <text x="116" y="295" class="box-title">Triager</text>
+  <text x="116" y="321" class="box-text">Paste title + body</text>
+  <text x="116" y="344" class="box-text">or import GitHub issue</text>
+  <text x="116" y="363" class="small">human review / approval</text>
+
+  <rect x="94" y="422" width="190" height="136" rx="14" class="external" filter="url(#shadow)"/>
+  <text x="116" y="453" class="box-title">GitHub API</text>
+  <text x="116" y="479" class="box-text">Import-only adapter</text>
+  <text x="116" y="502" class="box-text">title + body at intake</text>
+  <text x="116" y="530" class="small">never writes upstream</text>
+
+  <!-- App -->
+  <rect x="342" y="246" width="1040" height="410" rx="18" class="panel" filter="url(#shadow)"/>
+  <text x="370" y="280" class="section">APPLICATION LAYER</text>
+
+  <rect x="370" y="310" width="190" height="104" rx="12" class="module"/>
+  <text x="390" y="342" class="box-title">Intake adapters</text>
+  <text x="390" y="368" class="box-text">Form / GitHub ref</text>
+  <text x="390" y="391" class="small">IssueInput</text>
+
+  <rect x="598" y="310" width="220" height="104" rx="12" class="module"/>
+  <text x="618" y="342" class="box-title">TriagePipeline</text>
+  <text x="618" y="368" class="box-text">Classifier → Policy</text>
+  <text x="618" y="391" class="small">→ Approval decision</text>
+
+  <rect x="856" y="310" width="220" height="104" rx="12" class="module"/>
+  <text x="876" y="342" class="box-title">Classifier port</text>
+  <text x="876" y="368" class="box-text">FakeClassifier</text>
+  <text x="876" y="391" class="small">or Jev structured choices</text>
+
+  <rect x="1114" y="310" width="224" height="104" rx="12" class="guard"/>
+  <text x="1134" y="342" class="box-title">Policy + approval</text>
+  <text x="1134" y="368" class="box-text">SEC-001 / EMPTY-001</text>
+  <text x="1134" y="391" class="small">p1/escalate → human gate</text>
+
+  <rect x="370" y="474" width="286" height="126" rx="12" class="module"/>
+  <text x="390" y="506" class="box-title">Review UI</text>
+  <text x="390" y="532" class="box-text">Proposal + reasoning</text>
+  <text x="390" y="555" class="box-text">Edit / approve / reject</text>
+  <text x="390" y="578" class="small">optimistic concurrency</text>
+
+  <rect x="694" y="474" width="286" height="126" rx="12" class="module"/>
+  <text x="714" y="506" class="box-title">Action templates</text>
+  <text x="714" y="532" class="box-text">ask_info / draft_reply</text>
+  <text x="714" y="555" class="box-text">route / escalate</text>
+  <text x="714" y="578" class="small">structured, not free-form LLM prose</text>
+
+  <rect x="1018" y="474" width="320" height="126" rx="12" class="guard"/>
+  <text x="1038" y="506" class="box-title">Dry-run boundary</text>
+  <text x="1038" y="532" class="box-text">Record intended comment, labels, owner</text>
+  <text x="1038" y="555" class="box-text">No external repository mutation</text>
+  <text x="1038" y="578" class="small">DEMO_MODE blocks mutating routes</text>
+
+  <!-- Live flow arrows -->
+  <path d="M284 320 L370 350" class="flow-accent"/>
+  <path d="M284 490 L370 365" class="flow"/>
+  <path d="M560 362 L598 362" class="flow-accent"/>
+  <path d="M818 362 L856 362" class="flow-accent"/>
+  <path d="M1076 362 L1114 362" class="flow-accent"/>
+  <path d="M1226 414 L1226 454" class="flow"/>
+  <path d="M1114 535 L980 535" class="flow"/>
+  <path d="M694 535 L656 535" class="flow"/>
+  <path d="M513 474 L513 414" class="flow"/>
+
+  <!-- Persistence -->
+  <rect x="342" y="680" width="1040" height="184" rx="18" class="panel" filter="url(#shadow)"/>
+  <text x="370" y="715" class="section">WORKFLOW STATE</text>
+  <rect x="370" y="744" width="300" height="86" rx="12" class="store"/>
+  <text x="392" y="778" class="box-title">SQLAlchemy repository</text>
+  <text x="392" y="804" class="box-text">Issue workflow row + version</text>
+  <rect x="704" y="744" width="300" height="86" rx="12" class="store"/>
+  <text x="726" y="778" class="box-title">Decision log</text>
+  <text x="726" y="804" class="box-text">intake / classified / approval / dry-run</text>
+  <rect x="1038" y="744" width="300" height="86" rx="12" class="external"/>
+  <text x="1060" y="778" class="box-title">SQLite or Neon Postgres</text>
+  <text x="1060" y="804" class="box-text">persistent workflow database</text>
+  <path d="M513 600 L513 744" class="flow"/>
+  <path d="M1226 600 L1226 744" class="flow"/>
+  <path d="M670 787 L704 787" class="flow"/>
+  <path d="M1004 787 L1038 787" class="flow"/>
+
+  <!-- External classifier -->
+  <rect x="1120" y="74" width="402" height="110" rx="14" class="external" filter="url(#shadow)"/>
+  <text x="1144" y="107" class="box-title">TypeSafe Jev</text>
+  <text x="1144" y="133" class="box-text">One structured call: category, urgency, owner, action</text>
+  <text x="1144" y="159" class="small">used when TYPESAFE_API_KEY is configured</text>
+  <path d="M966 310 L1170 184" class="flow-accent"/>
+
+  <!-- Demo / deployment -->
+  <rect x="70" y="900" width="704" height="132" rx="18" class="panel"/>
+  <text x="96" y="934" class="section">DEPLOYMENT PROFILES</text>
+  <text x="96" y="966" class="box-text">Profile A · public demo: Render + Neon + DEMO_MODE=true</text>
+  <text x="96" y="991" class="box-text">FakeClassifier, seeded issues, read-only mutating routes</text>
+  <text x="96" y="1016" class="small">Profile B · private/live: DEMO_MODE=false + Jev + separate database</text>
+
+  <!-- Offline eval -->
+  <rect x="824" y="900" width="706" height="132" rx="18" class="panel"/>
+  <text x="850" y="934" class="section">OFFLINE EVALUATION PATH</text>
+  <text x="850" y="966" class="box-text">GitHub audit metadata + fetched bodies → cached eval corpus</text>
+  <text x="850" y="991" class="box-text">EvalRunner → temporal test + safety slices → metrics/results JSON</text>
+  <text x="850" y="1016" class="small">reuses classifier/policy vocabulary; does not use live workflow state</text>
+
+  <path d="M1210 864 L1210 900" class="flow-accent"/>
+  <path d="M1020 900 L1020 864" class="flow"/>
+
+  <!-- Legend -->
+  <rect x="82" y="1050" width="18" height="10" rx="3" fill="#14231f" stroke="#3b8c7d"/>
+  <text x="108" y="1060" class="small">external / actor</text>
+  <rect x="238" y="1050" width="18" height="10" rx="3" fill="#152130" stroke="#46617d"/>
+  <text x="264" y="1060" class="small">application module</text>
+  <rect x="422" y="1050" width="18" height="10" rx="3" fill="#211e2d" stroke="#836dac"/>
+  <text x="448" y="1060" class="small">state / persistence</text>
+  <rect x="606" y="1050" width="18" height="10" rx="3" fill="#2a2417" stroke="#c39b52"/>
+  <text x="632" y="1060" class="small">safety boundary</text>
+  <text x="1395" y="1060" class="small">issue-triage v1</text>
+</svg>

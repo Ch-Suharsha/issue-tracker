@@ -13,6 +13,9 @@ dev.db
 # Local scratch / issue tracker working files can be committed selectively;
 # keep ephemeral caches out:
 tmp/
+.agents/
+.scratch/
+.cursor/
 *.pyc
 __pycache__/
 .venv/

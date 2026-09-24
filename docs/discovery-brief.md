@@ -37,4 +37,4 @@ A fictional open-source analytics platform (“Kibana-shaped”) maintained by *
 | Security liaison | Mandatory escalation on vulnerability language, not product-name “security” noise |
 | Portfolio reviewer | Evidence of discovery, failure analysis, and eval honesty |
 
-See [CONTEXT.md](../CONTEXT.md) for vocabulary and [docs/adr/](../adr/) for binding architecture decisions.
+See the [README](../README.md) for the product vocabulary and [docs/adr/](../adr/) for binding architecture decisions.

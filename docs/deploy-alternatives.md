@@ -14,7 +14,7 @@ This doc records the deployment decision after grilling the Streamlit rewrite pr
 
 ## Why Streamlit was rejected
 
-- Locked v1 architecture: one FastAPI web service, server-rendered HTML ([spec](../.scratch/issue-triage-v1/spec.md), ADR 0004).
+- Locked v1 architecture: one FastAPI web service, server-rendered HTML (ADR 0004).
 - UI already built: forms, review page, approve/reject, policy badges, dry-run display.
 - GitHub does not replace Neon for workflow state, optimistic concurrency, or decision logs.
 - Public demo safety comes from `DEMO_MODE` + FakeClassifier, not from the hosting platform.
